@@ -35,16 +35,47 @@ public class Allocator {
         }
     }
 
-    public void memAlloc(int size) {
-
+    public Integer memAlloc(int size) {
+        for (int i = 0; i < this.size;) {
+            boolean free = Util.byteToBoolean(memory[i + 11]);
+            int memorySize = Util.byteArrayToInt(Arrays.copyOfRange(memory, i, i + 4));
+            int offset = headerSize + memorySize;
+            if (!free) {
+                i += offset;
+                continue;
+            }
+            if (size <= memorySize) {
+                memory[i + 11] = Util.booleanToByte(false);
+                return i + 12;
+            }
+            int startAddress = i + 12;
+            int nextHeader = i + headerSize + memorySize;
+            for (int j = nextHeader; j < this.size;) {
+                boolean currentHeaderFree = Util.byteToBoolean(memory[j + 11]);
+                int currentHeaderMemorySize = Util.byteArrayToInt(Arrays.copyOfRange(memory, j, j + 4));
+                if (!currentHeaderFree) {
+                    i = j + headerSize + currentHeaderMemorySize;
+                    break;
+                }
+                memorySize += currentHeaderMemorySize + headerSize;
+                if (memorySize >= size) {
+                    memory[startAddress - 1] = Util.booleanToByte(false);
+                    byte[] sizeInBytes = Util.intToByteArray(memorySize);
+                    System.arraycopy(sizeInBytes, 0, memory, i, 4);
+                    return startAddress;
+                }
+                j += headerSize + currentHeaderMemorySize;
+            }
+        }
+        return null;
     }
 
-    public void memRealloc(int addr, int size) {
-
+    public Integer memRealloc(int addr, int size) {
+        return null;
     }
 
     public void memFree(int addr) {
-
+        memory[addr - 1] = Util.booleanToByte(true);
     }
 
     public void dump() {
@@ -70,6 +101,16 @@ public class Allocator {
     }
 
     public static void main(String[] args) {
-        new Allocator(64, 16).dump();
+        Allocator allocator = new Allocator(64, 16);
+        allocator.dump();
+        int firstIndex;
+        System.out.println(firstIndex = allocator.memAlloc(5));
+        allocator.dump();
+        System.out.println(allocator.memAlloc(3));
+        allocator.dump();
+        allocator.memFree(firstIndex);
+        allocator.dump();
+        System.out.println(allocator.memAlloc(21));
+        allocator.dump();
     }
 }
