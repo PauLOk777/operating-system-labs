@@ -35,6 +35,18 @@ public class Allocator {
         }
     }
 
+    public void memAlloc(int size) {
+
+    }
+
+    public void memRealloc(int addr, int size) {
+
+    }
+
+    public void memFree(int addr) {
+
+    }
+
     public void dump() {
         try {
             int headerCounter = 1;
