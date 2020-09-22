@@ -21,7 +21,7 @@ public class Allocator {
     private void createHeaders() {
         byte[] currentMemorySize = Util.intToByteArray(blockSize - headerSize);
         byte[] previousMemorySize;
-        byte free = 1;
+        byte free = Util.booleanToByte(true);
 
         for (int i = 0; i < size; i += blockSize) {
             if (i == 0) {
@@ -36,6 +36,7 @@ public class Allocator {
     }
 
     public Integer memAlloc(int size) {
+        if (size > memory.length - headerSize) return null;
         for (int i = 0; i < this.size;) {
             boolean free = Util.byteToBoolean(memory[i + 11]);
             int memorySize = Util.byteArrayToInt(Arrays.copyOfRange(memory, i, i + 4));
@@ -70,12 +71,63 @@ public class Allocator {
         return null;
     }
 
+    @SuppressWarnings("all")
     public Integer memRealloc(int addr, int size) {
-        return null;
+        if (size > memory.length - headerSize) return null;
+        int headerAddr = addr - 12;
+        int memorySize = Util.byteArrayToInt(Arrays.copyOfRange(memory, headerAddr, headerAddr + 4));
+        if (memorySize == size) return addr;
+        if (memorySize > size) {
+            int possibleBlocks = (headerSize + memorySize - size) / blockSize;
+            int blocksForSize = (int) Math.ceil((headerSize + size) / (double) blockSize);
+            if (possibleBlocks > 1) {
+                byte[] data = Arrays.copyOfRange(memory, addr, addr + memorySize);
+                int memoryForPart = blocksForSize * blockSize - headerSize;
+                System.arraycopy(data, memorySize - memoryForPart, memory, addr, memoryForPart);
+                System.arraycopy(Util.intToByteArray(memoryForPart), 0, memory, headerAddr, 4);
+                int nextHeaderAddr = addr + memoryForPart;
+                byte[] currentMemorySize = Util.intToByteArray(blockSize - headerSize);
+                byte[] previousMemorySize = Util.intToByteArray(blockSize - headerSize);
+                byte free = Util.booleanToByte(true);
+                for(int i = 1; i < possibleBlocks - blocksForSize + 1; i++) {
+                    System.arraycopy(currentMemorySize, 0, memory, nextHeaderAddr * i, 4);
+                    System.arraycopy(previousMemorySize, 0, memory, nextHeaderAddr * i + 4, 4);
+                    memory[nextHeaderAddr * i + 11] = free;
+                }
+            }
+            return addr;
+        }
+
+        byte[] data = Arrays.copyOfRange(memory, addr, addr + memorySize);
+        memory[headerAddr + 11] = Util.booleanToByte(true);
+        Integer newAddr = memAlloc(size);
+        if (newAddr == null) {
+            memory[headerAddr + 11] = Util.booleanToByte(false);
+        } else {
+            int newMemorySize = Util.byteArrayToInt(Arrays.copyOfRange(memory, newAddr - 12 , newAddr - 8));
+            System.arraycopy(data, 0, memory, newAddr + newMemorySize - memorySize, memorySize);
+        }
+        return newAddr;
     }
 
     public void memFree(int addr) {
         memory[addr - 1] = Util.booleanToByte(true);
+        optimizeBlock(addr);
+    }
+
+    private void optimizeBlock(int addr) {
+        byte[] currentMemorySize = Util.intToByteArray(blockSize - headerSize);
+        byte[] previousMemorySize = Util.intToByteArray(blockSize - headerSize);
+        byte free = Util.booleanToByte(true);
+        int memorySize = Util.byteArrayToInt(Arrays.copyOfRange(memory, addr - 12, addr - 8));
+        System.arraycopy(currentMemorySize, 0, memory, addr - 12, 4);
+        int possibleBlocks = (memorySize + headerSize) / blockSize;
+        int nextHeaderAddr = addr + blockSize - headerSize;
+        for (int i = 1; i < possibleBlocks + 1; i++) {
+            System.arraycopy(currentMemorySize, 0, memory, nextHeaderAddr * i, 4);
+            System.arraycopy(previousMemorySize, 0, memory, nextHeaderAddr * i + 4, 4);
+            memory[nextHeaderAddr * i + 11] = free;
+        }
     }
 
     public void dump() {
@@ -101,16 +153,26 @@ public class Allocator {
     }
 
     public static void main(String[] args) {
-        Allocator allocator = new Allocator(64, 16);
+        Allocator allocator = new Allocator(128, 16);
         allocator.dump();
-        int firstIndex;
-        System.out.println(firstIndex = allocator.memAlloc(5));
+        int index;
+        System.out.println(index = allocator.memAlloc(5));
         allocator.dump();
         System.out.println(allocator.memAlloc(3));
         allocator.dump();
-        allocator.memFree(firstIndex);
+        allocator.memFree(index);
+        System.out.println("----------------------");
         allocator.dump();
-        System.out.println(allocator.memAlloc(21));
+        System.out.println(index = allocator.memAlloc(1));
+        allocator.dump();
+        System.out.println(allocator.memRealloc(index, 80));
+        allocator.dump();
+        allocator.memFree(index);
+        System.out.println("----------------------");
+        allocator.dump();
+        System.out.println(index = allocator.memAlloc(80));
+        allocator.dump();
+        System.out.println(allocator.memRealloc(index, 5));
         allocator.dump();
     }
 }
