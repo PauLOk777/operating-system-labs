@@ -71,7 +71,6 @@ public class Allocator {
         return null;
     }
 
-    @SuppressWarnings("all")
     public Integer memRealloc(int addr, int size) {
         if (size > memory.length - headerSize) return null;
         int headerAddr = addr - 12;
