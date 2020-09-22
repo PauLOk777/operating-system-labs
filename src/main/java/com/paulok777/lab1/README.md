@@ -60,7 +60,7 @@ Second, you can run **IntellijIdea** or **Eclipse** and start the main function 
 >goes through 'our' heap and prints the states of all the existing blocks.
 
 ### Creation of our allocator
-####In this example we use *128* bytes memory and *16* bytes for block size
+#### In this example we use *128* bytes memory and *16* bytes for block size
 ##### Code
 ```
 Allocator allocator = new Allocator(128, 16);
