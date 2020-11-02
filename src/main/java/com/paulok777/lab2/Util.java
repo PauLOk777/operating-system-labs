@@ -32,4 +32,13 @@ public class Util {
             entry.getValue().remove(address);
         }
     }
+
+    public static int roundNumberToNearestDegreeOfTwo(int number) {
+        int counter = 0;
+        while (number != 0) {
+            number >>= 1;
+            counter++;
+        }
+        return (int)Math.pow(2, counter);
+    }
 }

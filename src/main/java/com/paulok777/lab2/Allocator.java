@@ -32,7 +32,6 @@ public class Allocator {
         if (totalSize < pageSize || totalSize % pageSize != 0 || pageSize < 16) {
             throw new IllegalArgumentException();
         }
-        HashMap<Integer, Integer> hashMap = new HashMap<>();
         this.totalSize = totalSize;
         this.pageSize = pageSize;
         buffer = new byte[totalSize];
@@ -46,11 +45,39 @@ public class Allocator {
         }
     }
 
-    public int memAlloc(int size) {
+    public Integer memAlloc(int size) {
+        int necessaryBlockSize = Util.roundNumberToNearestDegreeOfTwo(size);
+        List<Integer> pagesDividedToNecessaryBlockSize = pagesDividedToBlocks.get(necessaryBlockSize);
+        if (pagesDividedToNecessaryBlockSize == null && freePages.isEmpty()) return null;
+        if (pagesDividedToNecessaryBlockSize != null) { // we have page with necessary block
+            int addr = pagesDividedToNecessaryBlockSize.get(0);
+            return getAddrWhenPageWithNecessaryBlockExist(addr);
+        } else {
+
+        }
         return 0;
     }
 
-    public int memRealloc(int addr, int size) {
+    private int getAddrWhenPageWithNecessaryBlockExist(int addr) {
+        byte[] pageDescriptor = pageDescriptors[addr / pageSize];
+        int freeBlockAddr = Util.byteArrayToInt(Arrays.copyOfRange(pageDescriptor, 4, 8));
+        int countOfFreeBlocks = Util.byteArrayToInt(Arrays.copyOfRange(pageDescriptor, 8, 12));
+        int blockSize = Util.byteArrayToInt(Arrays.copyOfRange(pageDescriptor, 12, 16));
+
+        if (countOfFreeBlocks == 1) {
+             byte[] occupiedType = Util.intToByteArray(PageState.OCCUPIED.ordinal());
+             System.arraycopy(occupiedType, 0, pageDescriptor, 0, occupiedType.length);
+             pagesDividedToBlocks.get(blockSize).remove(0);
+        } else {
+            byte[] newCount = Util.intToByteArray(--countOfFreeBlocks);
+            byte[] newFirstBlockAddr = Arrays.copyOfRange(buffer, freeBlockAddr, freeBlockAddr + 4);
+            System.arraycopy(newCount, 8, pageDescriptor, 8, newCount.length);
+            System.arraycopy(newFirstBlockAddr, 4, pageDescriptor, 4, newFirstBlockAddr.length);
+        }
+        return freeBlockAddr;
+    }
+
+    public Integer memRealloc(int addr, int size) {
         return 0;
     }
 
