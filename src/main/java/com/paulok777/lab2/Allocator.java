@@ -46,16 +46,45 @@ public class Allocator {
     }
 
     public Integer memAlloc(int size) {
-        int necessaryBlockSize = Util.roundNumberToNearestDegreeOfTwo(size);
+        int necessaryBlockSize = Util.roundNumberToNearestDegreeOfTwo(size + 4);
         List<Integer> pagesDividedToNecessaryBlockSize = pagesDividedToBlocks.get(necessaryBlockSize);
         if (pagesDividedToNecessaryBlockSize == null && freePages.isEmpty()) return null;
         if (pagesDividedToNecessaryBlockSize != null) { // we have page with necessary block
             int addr = pagesDividedToNecessaryBlockSize.get(0);
             return getAddrWhenPageWithNecessaryBlockExist(addr);
-        } else {
+        } else if (size + 4 > pageSize / 2 && size + 4 <= freePages.size() * pageSize) { // make multi page block
+            freePages.remove(0);
+            return 1;
+        } else if (!freePages.isEmpty() && size + 4 <= pageSize / 2) { // divide free page to blocks
+            int addrOfFreePage = freePages.remove(0);
+            Util.addValueToBucketIfNotExists(pagesDividedToBlocks, necessaryBlockSize, addrOfFreePage);
+            byte[] pageDescriptor = pageDescriptors[addrOfFreePage / pageSize];
 
+            divideFreePageIntoBlocks(addrOfFreePage, necessaryBlockSize, pageDescriptor);
+
+            byte[] nextAddr = Util.intToByteArray(addrOfFreePage + necessaryBlockSize);
+            System.arraycopy(nextAddr, 0, pageDescriptor, 4, nextAddr.length);
+            return addrOfFreePage + 4;
+        } else {
+            return null;
         }
-        return 0;
+    }
+
+    private void divideFreePageIntoBlocks(int addr, int size, byte[] pageDescriptor) {
+        for (int i = 1; i < (pageSize / size); i++) {
+            byte[] nextBlock = Util.intToByteArray(addr + size * i);
+            System.arraycopy(nextBlock, 0, buffer, addr + size * (i - 1), nextBlock.length);
+        }
+
+        byte[] newState = Util.intToByteArray(PageState.DIVIDED.ordinal());
+        byte[] firstFreeBlockAddr = Util.intToByteArray(addr);
+        byte[] countOfFreeBlocks = Util.intToByteArray(pageSize / size - 1);
+        byte[] blockSize = Util.intToByteArray(size);
+
+        System.arraycopy(newState, 0, pageDescriptor, 0, newState.length);
+        System.arraycopy(firstFreeBlockAddr, 0, pageDescriptor, 4, firstFreeBlockAddr.length);
+        System.arraycopy(countOfFreeBlocks, 0, pageDescriptor, 8, countOfFreeBlocks.length);
+        System.arraycopy(blockSize, 0, pageDescriptor, 12, blockSize.length);
     }
 
     private int getAddrWhenPageWithNecessaryBlockExist(int addr) {
@@ -63,18 +92,17 @@ public class Allocator {
         int freeBlockAddr = Util.byteArrayToInt(Arrays.copyOfRange(pageDescriptor, 4, 8));
         int countOfFreeBlocks = Util.byteArrayToInt(Arrays.copyOfRange(pageDescriptor, 8, 12));
         int blockSize = Util.byteArrayToInt(Arrays.copyOfRange(pageDescriptor, 12, 16));
+        byte[] newCount = Util.intToByteArray(--countOfFreeBlocks);
 
-        if (countOfFreeBlocks == 1) {
-             byte[] occupiedType = Util.intToByteArray(PageState.OCCUPIED.ordinal());
-             System.arraycopy(occupiedType, 0, pageDescriptor, 0, occupiedType.length);
-             pagesDividedToBlocks.get(blockSize).remove(0);
+        if (countOfFreeBlocks == 1) { // last block
+            System.arraycopy(newCount, 0, pageDescriptor, 8, newCount.length);
+            pagesDividedToBlocks.get(blockSize).remove(0);
         } else {
-            byte[] newCount = Util.intToByteArray(--countOfFreeBlocks);
             byte[] newFirstBlockAddr = Arrays.copyOfRange(buffer, freeBlockAddr, freeBlockAddr + 4);
-            System.arraycopy(newCount, 8, pageDescriptor, 8, newCount.length);
-            System.arraycopy(newFirstBlockAddr, 4, pageDescriptor, 4, newFirstBlockAddr.length);
+            System.arraycopy(newCount, 0, pageDescriptor, 8, newCount.length);
+            System.arraycopy(newFirstBlockAddr, 0, pageDescriptor, 4, newFirstBlockAddr.length);
         }
-        return freeBlockAddr;
+        return freeBlockAddr + 4;
     }
 
     public Integer memRealloc(int addr, int size) {
@@ -90,12 +118,12 @@ public class Allocator {
 
         for (int i = 0; i < totalSize / pageSize; i++) {
             byte[] pageDescriptor = pageDescriptors[i];
-            int enumOrdinal = Util.byteArrayToInt(Arrays.copyOfRange(buffer, i, i + 4));
+            int enumOrdinal = Util.byteArrayToInt(Arrays.copyOfRange(pageDescriptor, 0, 4));
             String type = PageState.values()[enumOrdinal].name();
             dump.append("Page ").append(i + 1).append(": ").append(type);
             if (type.equals(PageState.DIVIDED.name())) {
-                int countOfFreeBlocks = Util.byteArrayToInt(Arrays.copyOfRange(buffer, i + 8, i + 12));
-                int blockSize = Util.byteArrayToInt(Arrays.copyOfRange(buffer, i + 1-2, i + 16));
+                int countOfFreeBlocks = Util.byteArrayToInt(Arrays.copyOfRange(pageDescriptor, 8, 12));
+                int blockSize = Util.byteArrayToInt(Arrays.copyOfRange(pageDescriptor, 12, 16));
                 dump.append("; count of free blocks: ").append(countOfFreeBlocks);
                 dump.append("; block size: ").append(blockSize);
             }
@@ -107,6 +135,9 @@ public class Allocator {
 
     public static void main(String[] args) {
         Allocator allocator = new Allocator(1024, 256);
+        System.out.println(allocator.memAlloc(20));
+        System.out.println(allocator.memAlloc(80));
+        System.out.println(allocator.memAlloc(25));
         System.out.println(allocator.dump());
     }
 }
