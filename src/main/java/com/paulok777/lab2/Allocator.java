@@ -53,8 +53,25 @@ public class Allocator {
             int addr = pagesDividedToNecessaryBlockSize.get(0);
             return getAddrWhenPageWithNecessaryBlockExist(addr);
         } else if (size + 4 > pageSize / 2 && size + 4 <= freePages.size() * pageSize) { // make multi page block
-            freePages.remove(0);
-            return 1;
+            int numberOfPages = necessaryBlockSize / pageSize;
+            int[] addresses = new int[numberOfPages];
+
+            for (int i = 0; i < numberOfPages; i++) {
+                addresses[i] = freePages.remove(0);
+            }
+
+            for (int i = 0; i < numberOfPages; i++) {
+                byte[] type = Util.intToByteArray(PageState.OCCUPIED.ordinal());
+                byte[] sizeOfBlock = Util.intToByteArray(necessaryBlockSize);
+                byte[] ordinalNumber = Util.intToByteArray(i);
+
+                byte[] pageDescriptor = pageDescriptors[addresses[i] / pageSize];
+                System.arraycopy(type, 0, pageDescriptor, 0, type.length);
+                System.arraycopy(sizeOfBlock, 0, pageDescriptor, 4, sizeOfBlock.length);
+                System.arraycopy(ordinalNumber, 0, pageDescriptor, 8, ordinalNumber.length);
+            }
+
+            return addresses[0];
         } else if (!freePages.isEmpty() && size + 4 <= pageSize / 2) { // divide free page to blocks
             int addrOfFreePage = freePages.remove(0);
             Util.addValueToBucketIfNotExists(pagesDividedToBlocks, necessaryBlockSize, addrOfFreePage);
@@ -127,6 +144,12 @@ public class Allocator {
                 dump.append("; count of free blocks: ").append(countOfFreeBlocks);
                 dump.append("; block size: ").append(blockSize);
             }
+            if (type.equals(PageState.OCCUPIED.name())) {
+                int blockSize = Util.byteArrayToInt(Arrays.copyOfRange(pageDescriptor, 4, 8));
+                int ordinalNumber = Util.byteArrayToInt(Arrays.copyOfRange(pageDescriptor, 8, 12));
+                dump.append("; block size: ").append(blockSize);
+                dump.append("; ordinal number: ").append(ordinalNumber);
+            }
             dump.append('\n');
         }
 
@@ -138,6 +161,7 @@ public class Allocator {
         System.out.println(allocator.memAlloc(20));
         System.out.println(allocator.memAlloc(80));
         System.out.println(allocator.memAlloc(25));
+        System.out.println(allocator.memAlloc(400));
         System.out.println(allocator.dump());
     }
 }
