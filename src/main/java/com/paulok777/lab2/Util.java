@@ -1,5 +1,6 @@
 package com.paulok777.lab2;
 
+import java.awt.*;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
@@ -29,7 +30,7 @@ public class Util {
 
     public static void deleteValueToBucketIfNotExists(Map<Integer, List<Integer>> pagesDividedToBlocks, int address) {
         for (Map.Entry<Integer, List<Integer>> entry : pagesDividedToBlocks.entrySet()) {
-            entry.getValue().remove(address);
+            entry.getValue().remove((Integer) address);
         }
     }
 
