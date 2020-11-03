@@ -109,7 +109,7 @@ System.out.println(allocator.dump());
 ---
 
 #### Allocating different size of memory for check dividing into blocks
-#####Code
+##### Code
 
 ```
 int addr1 = allocator.memAlloc(80);
@@ -127,7 +127,7 @@ System.out.println(allocator.dump());
 ---
 
 #### Free some blocks less than half of the page (used variables from example above)
-#####Code
+##### Code
 
 ```
 allocator.memFree(addr1);
@@ -141,7 +141,7 @@ System.out.println(allocator.dump());
 ---
 
 #### Realloc block less than half of the page (used variables from example above)
-#####Code
+##### Code
 
 ```
 allocator.memRealloc(addr2, 40);
@@ -153,7 +153,7 @@ System.out.println(allocator.dump());
 ---
 
 #### Alloc multi page block (used variables from example above)
-#####Code
+##### Code
 
 ```
 addr1 = allocator.memAlloc(257);
@@ -165,7 +165,7 @@ System.out.println(allocator.dump());
 ---
 
 #### Realloc block less than half of the page (used variables from example above)
-#####Code
+##### Code
 
 ```
 allocator.memRealloc(addr1, 200);
