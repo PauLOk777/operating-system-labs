@@ -47,20 +47,20 @@ public class Allocator {
     }
 
     public Integer memAlloc(int size) {
-        int necessaryBlockSize = Util.roundNumberToNearestDegreeOfTwo(size + 4);
+        int necessaryBlockSize = Util.roundNumberToNearestDegreeOfTwo(size);
         List<Integer> pagesDividedToNecessaryBlockSize = pagesDividedToBlocks.get(necessaryBlockSize);
         if (pagesDividedToNecessaryBlockSize == null && freePages.isEmpty()) return null;
         if (pagesDividedToNecessaryBlockSize != null && !pagesDividedToNecessaryBlockSize.isEmpty()) { // we have page with necessary block
             int addr = pagesDividedToNecessaryBlockSize.get(0);
             return getAddrWhenPageWithNecessaryBlockExist(addr);
-        } else if (size + 4 > pageSize / 2 && size + 4 <= freePages.size() * pageSize) { // make multi page block
+        } else if (size > pageSize / 2 && size <= freePages.size() * pageSize) { // make multi page block
             int numberOfPages = necessaryBlockSize / pageSize;
             int[] addresses = new int[numberOfPages];
 
             setNewDescriptorsMultiPageBlock(addresses, numberOfPages, necessaryBlockSize);
 
             return addresses[0];
-        } else if (!freePages.isEmpty() && size + 4 <= pageSize / 2) { // divide free page to blocks
+        } else if (!freePages.isEmpty() && size <= pageSize / 2) { // divide free page to blocks
             int addrOfFreePage = freePages.remove(0);
             Util.addValueToBucketIfNotExists(pagesDividedToBlocks, necessaryBlockSize, addrOfFreePage);
             byte[] pageDescriptor = pageDescriptors[addrOfFreePage / pageSize];
@@ -254,7 +254,7 @@ public class Allocator {
         // divide into multi page
         addr1 = allocator.memAlloc(257);
         System.out.println(allocator.dump());
-        System.out.println(allocator.memRealloc(addr1, 200));
+        allocator.memRealloc(addr1, 200);
         System.out.println(allocator.dump());
     }
 }
