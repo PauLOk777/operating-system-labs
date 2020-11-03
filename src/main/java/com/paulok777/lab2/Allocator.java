@@ -235,6 +235,7 @@ public class Allocator {
 
     public static void main(String[] args) {
         Allocator allocator = new Allocator(1024, 256);
+        System.out.println(allocator.dump());
         // divide into blocks
         int addr1 = allocator.memAlloc(80);
         int addr2 = allocator.memAlloc(90);

@@ -94,3 +94,84 @@ Second, you can run **IntellijIdea** or **Eclipse** and start the main function 
 
 >All memory state outputs are made with the `mem_dump` function, which, basically, 
 >goes through 'our' heap and prints the states of all the existing blocks.
+
+### Creation of our allocator
+#### In this example we use *1024* bytes memory and *256* bytes for page size
+##### Code
+
+```
+Allocator allocator = new Allocator(1024, 256);
+System.out.println(allocator.dump());
+```
+
+##### Output
+![creation of alloc](images/creationOfAlloc.png)
+---
+
+#### Allocating different size of memory for check dividing into blocks
+#####Code
+
+```
+int addr1 = allocator.memAlloc(80);
+int addr2 = allocator.memAlloc(90);
+allocator.memAlloc(25);
+int addr3 = allocator.memAlloc(50);
+allocator.memAlloc(50);
+int addr4 = allocator.memAlloc(50);
+allocator.memAlloc(50);
+System.out.println(allocator.dump());
+```
+
+##### Output
+![alloc_diff_sizes](images/allocDiffSizes.png)
+---
+
+#### Free some blocks less than half of the page (used variables from example above)
+#####Code
+
+```
+allocator.memFree(addr1);
+allocator.memFree(addr3);
+allocator.memFree(addr4);
+System.out.println(allocator.dump());
+```
+
+##### Output
+![free_blocks_less_page](images/freeBlocksLessPage.png)
+---
+
+#### Realloc block less than half of the page (used variables from example above)
+#####Code
+
+```
+allocator.memRealloc(addr2, 40);
+System.out.println(allocator.dump());
+```
+
+##### Output
+![realloc_one_block_less_page](images/reallocOneBlockLessPage.png)
+---
+
+#### Alloc multi page block (used variables from example above)
+#####Code
+
+```
+addr1 = allocator.memAlloc(257);
+System.out.println(allocator.dump());
+```
+
+##### Output
+![alloc_multi_page_block](images/allocMultiPageBlock.png)
+---
+
+#### Realloc block less than half of the page (used variables from example above)
+#####Code
+
+```
+allocator.memRealloc(addr1, 200);
+System.out.println(allocator.dump());
+```
+
+##### Output
+![realloc_multi_page_block](images/reallocMultiPageBlock.png)
+---
