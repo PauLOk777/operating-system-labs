@@ -58,11 +58,13 @@ of i parameter. Below you can see this sample of code.
 For profiling java application we will use JProfiler. We need to install him and
 if we work in IntelliJIDEA we need to install the plugin JProfile.
 After that we must run our application by the Profile. For example:
+
 ![how-to-run](images/how-to-run.png)
 
 ## Analysis with JProfiler
 
 Now we can see the snapshot of our system components and their usage. In our example we can see next:
+
 ![main-app](images/main-app.png)
 
 We are interested in: "Telemetries" -> "Overview", "Telemetries" -> "CPU Load", "CPU Views" -> "Hot Spots"
@@ -71,9 +73,11 @@ In "Telemetries" -> "Overview" tab we can the global overview. As we can see at 
 our garbage collector did some work, we used only 1 thread which was in 3 states: runnable, waiting, blocked.
 
 In the "Telemetries" -> "CPU Load" we can see our CPU maximum pick:
+
 ![cpu-load](images/cpu-load.png)
 
 Now we will go to the bottlenecks. Let's move to the "CPU Views" -> "Hot Spots".
+
 ![cpu-hot-spots](images/cpu-hot-spots.png)
 
 We can see that the main bottleneck is the java.lang.Thread.sleep function: 78.7% of process times 15,248ms.
