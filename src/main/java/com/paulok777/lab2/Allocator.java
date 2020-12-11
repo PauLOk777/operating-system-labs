@@ -69,7 +69,7 @@ public class Allocator {
 
             byte[] nextAddr = Util.intToByteArray(addrOfFreePage + necessaryBlockSize);
             System.arraycopy(nextAddr, 0, pageDescriptor, 4, nextAddr.length);
-            return addrOfFreePage + 4;
+            return addrOfFreePage;
         } else {
             return null;
         }
@@ -147,7 +147,7 @@ public class Allocator {
                 memFree(addr);
                 result = memAlloc(size);
                 if (result == null) {
-                    memAlloc(blockSize - 4);
+                    memAlloc(blockSize);
                     break;
                 }
                 return result;
