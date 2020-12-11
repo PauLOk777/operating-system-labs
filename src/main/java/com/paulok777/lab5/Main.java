@@ -1,4 +1,4 @@
-package com.paulok777.lab3;
+package com.paulok777.lab5;
 
 public class Main {
     public static void main(String[] args) {
