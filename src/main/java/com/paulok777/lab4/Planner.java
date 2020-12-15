@@ -1,9 +1,7 @@
 package com.paulok777.lab4;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 public class Planner {
 
@@ -13,6 +11,12 @@ public class Planner {
 
     private List<Integer> optimizedTasks;
     private List<Integer> optimizedResources;
+
+    public Planner() {
+        fillByExample();
+        optimizedTasks = new ArrayList<>();
+        optimizedResources = new ArrayList<>();
+    }
 
     public Planner(int tasks, int resources) {
         this.tasks = tasks;
@@ -62,7 +66,7 @@ public class Planner {
         for (int i = 0; i < tasks; i++) {
             if (!optimizedTasks.contains(i)) {
                 for (int j = 0; j < resources; j++) {
-                    if (!optimizedResources.contains(j) && matrix[i][j] > 0) {
+                    if (matrix[i][j] > 0 && !optimizedResources.contains(j)) {
                         reduceMatrix(i, j);
                         printMatrix();
                         optimizedTasks.add(i);
@@ -156,11 +160,9 @@ public class Planner {
     }
 
     public static void main(String[] args) {
-        Planner planner = new Planner(8, 5);
+        Planner planner = new Planner();
         planner.printMatrix();
-        planner.randomFill();
-//        planner.fillByExample();
-        planner.printMatrix();
+//        planner.randomFill();
         planner.plan();
         planner.printRelationTaskResource();
     }

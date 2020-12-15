@@ -1,73 +1,58 @@
-# Lab 5 - Memory optimization
-## Initial input file and its analysis
+# Lab 4 - Research of principles of design and work of dynamic and static planning 
+## Not exclusive planning
 
-```
-int[][][] a = new int[100][100][100];
+The essence of planning, which does not exclude, is as follows.
+We need to find such appointments that we can't do without - that is, 
+those that claim a single resource.
 
-for (int i = 0; i < 100; i++) {
-        for (int j = 0; j < 100; j++) {
-                for (int k = 0; k < 100; k++) {
-                    a[k][j][i]++;
-                }
-        }
-}
-```
+### Rule 1 
+It is necessary to find in a destination matrix such line which contains only one unit, 
+on this cell to execute assignments, and to reduce a matrix. 
 
-The code seems rather primitive and easy. We are creating triple array and
-by default it is initialized by zeros. And then with help of triple cycles
-we increment all elements of triple array.
+### Rule 2
+The same assumption can be made about a resource - if the resource is claimed by one
+task - it must be assigned to him. This is a search for a unit in a column, followed by the same purpose.
 
-At first glance, in this case there is nothing to optimize. The easiest and 
-best way to walk through the elements of the triple array is three cycles. This is true, 
-but there is actually a difference in the way we go through the triple array.
+### Rule 3
+There are cases when the matrix is not reduced to the end - there are no rows / columns in which only one 
+unit - therefore, perform the appointment randomly - especially the result will not be affected, and then reduce the matrix.
 
-## Optimized code and its analysis
+In our application I tried to use all 3 rules sequentially.
 
-Consider such a property as the locality of the data. When we refer to different data, 
-it is desirable that they be next to each other in memory.
+## Example
+### Initial state
+![initState](images/initState.png)
 
-In the example above, we cover the triple array on the third array, this is a bad practice,
- because in reality the data of the triple array is stored on the first array. That is, we 
- first turned to the first element of every third array, then to another, and so on. Let's optimize this a bit:
- 
-```
-int[][][] a = new int[100][100][100];
+In this example we have 8 tasks and 8 resources. Let's plan it!
 
-for (int i = 0; i < 100; i++) {
-        for (int j = 0; j < 100; j++) {
-                for (int k = 0; k < 100; k++) {
-                    a[i][j][k]++;
-                }
-        }
-}
-```
+### First step
 
-Now we turn in turn to all elements of the first element of the first array, 
-then to all elements of the second element of the first array, then to the third and so on ...
+![firstStep](images/firstStep.png)
 
-Did it really give us any gain?
+Here we used our first rule. We found the row with only 1 unit.
 
-## Time measurements of both examples
+### Second step
 
-To compare the running time, I ran each of the options 10 times and calculated the avg of each
+![secondStep](images/secondStep.png)
 
-```
-long sum = 0;
-for (int i = 0; i < 10; i++) {
-    sum += getTimeOriginalFunction();
-}
-System.out.println(sum / 10);
+All the same as in first step.
 
-sum = 0;
-for (int i = 0; i < 10; i++) {
-    sum += getTimeOptimizedFunction();
-}
-System.out.println(sum / 10);
-```
+### Third step
 
-The result of the first (non-optimized): **11240259** nanoseconds.
+![thirdStep](images/thirdStep.png)
 
-The result of the second (optimized): **5716740** nanoseconds.
+Here we used our second rule. We found the column with only 1 unit.
 
-As we can see, we have a gain in time. At first glance, this is a small amount, but in large
- programs that work with a lot of big data, it can significantly reduce execution time.
+### Last steps
+
+At least when no rows and no columns with only 1 unit, we used our third rule
+We just simply take first unit and make reduce.
+
+![lastSteps](images/lastSteps.png)
+
+## Result
+
+Now we can see our result in task to resource relation like Map<String, String>
+
+![result](images/result.png)
+
