@@ -52,7 +52,7 @@ We just simply take first unit and make reduce.
 
 ## Result
 
-Now we can see our result in task to resource relation like Map<String, String>
+Now we can see our result in task to resource relation like Map<Integer, Integer>
 
 ![result](images/result.png)
 
